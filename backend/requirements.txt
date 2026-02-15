@@ -1,9 +1,11 @@
 fastapi
 uvicorn
-supabase
+python-multipart
 python-dotenv
+supabase
+google-generativeai
 pydantic
 pydantic-settings
-python-multipart
 httpx
-pytest
+PyMuPDF
+pathlib

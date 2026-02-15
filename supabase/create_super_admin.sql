@@ -5,7 +5,7 @@ DO $$
 DECLARE
     new_user_id UUID := gen_random_uuid();
     admin_email TEXT := 'admin@lokai.gov.np'; -- Updated to project name
-    admin_password TEXT := 'LOKAI_Admin_2024'; -- User should change this
+    admin_password TEXT := 'admin'; -- User should change this
 BEGIN
     -- 1. Create user in auth.users
     INSERT INTO auth.users (
@@ -48,12 +48,13 @@ BEGIN
     );
 
     -- 2. Create identities for the user
-    INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
     VALUES (
         gen_random_uuid(),
         new_user_id,
         format('{"sub":"%s","email":"%s"}', new_user_id, admin_email)::jsonb,
         'email',
+        new_user_id, -- provider_id is the user_id for email provider
         now(),
         now(),
         now()
