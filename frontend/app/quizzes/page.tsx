@@ -5,68 +5,67 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button"
 import { BackButton } from "@/components/ui/back-button"
 import { motion } from "framer-motion"
-import { BookOpen, Sparkles, ArrowRight, BrainCircuit } from "lucide-react"
+import { BrainCircuit, BookOpen, Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 export default function QuizzesPage() {
     return (
-        <div className="py-12 bg-gray-50/50 flex-1 min-h-screen">
+        <div className="py-12 bg-white flex-1 min-h-screen text-slate-900">
             <Container>
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="max-w-5xl mx-auto space-y-12"
+                    className="max-w-5xl mx-auto space-y-16"
                 >
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                         <div className="space-y-4">
                             <BackButton />
                             <div>
-                                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Practice Center</h1>
-                                <p className="text-gray-500 text-lg font-medium mt-2">Master the General Knowledge section with our comprehensive question bank.</p>
+                                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Practice Center</h1>
+                                <p className="text-slate-500 text-lg font-medium mt-2">Master the General Knowledge section with our comprehensive bank.</p>
                             </div>
                         </div>
                         <div className="hidden md:block">
                             <Link href="/dashboard">
-                                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-center gap-4 group cursor-pointer hover:bg-primary/10 transition-colors">
-                                    <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary">
-                                        <BrainCircuit className="h-6 w-6" />
+                                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center gap-4 group cursor-pointer hover:bg-slate-100 transition-all">
+                                    <div className="h-10 w-10 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
+                                        <BrainCircuit className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-primary uppercase tracking-widest">AI Lab</p>
-                                        <p className="text-sm font-bold text-gray-900">Try AI Quizzes</p>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AI Lab</p>
+                                        <p className="text-sm font-bold text-slate-900">Try AI Quizzes</p>
                                     </div>
-                                    <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
+                                    <ArrowRight className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-all ml-2" />
                                 </div>
                             </Link>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {["Geography", "History", "Constitution", "Economy", "International", "Science & Tech"].map((category, i) => (
                             <motion.div
                                 key={category}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
+                                transition={{ delay: i * 0.05 }}
                             >
-                                <Card className="group border-none shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden bg-white/80 backdrop-blur-sm">
-                                    <div className="h-1.5 w-full bg-gray-100 group-hover:bg-primary transition-colors" />
-                                    <CardHeader className="pt-8 px-6">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-primary group-hover:text-white transition-all">
+                                <Card className="group h-full border border-slate-100 shadow-none hover:border-slate-200 transition-all bg-white flex flex-col">
+                                    <CardHeader className="p-8 pb-4">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-all overflow-hidden border border-transparent group-hover:border-primary/10">
                                                 <BookOpen className="h-5 w-5" />
                                             </div>
-                                            <div className="bg-amber-100/50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Featured</div>
+                                            <span className="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Featured</span>
                                         </div>
-                                        <CardTitle className="text-2xl font-black text-gray-900 group-hover:text-primary transition-colors">{category}</CardTitle>
-                                        <CardDescription className="text-gray-500 font-medium line-clamp-2 pt-2">
-                                            Practice specific questions focused on {category} sub-topics and past papers.
+                                        <CardTitle className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors">{category}</CardTitle>
+                                        <CardDescription className="text-slate-500 font-medium text-sm pt-2 leading-relaxed">
+                                            Practice sub-topics and past paper questions for {category}.
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent className="px-6 pb-8 pt-4">
-                                        <Button className="w-full h-11 font-bold group-hover:shadow-lg group-hover:shadow-primary/20 transition-all">
+                                    <CardContent className="px-8 pb-8 mt-auto pt-6">
+                                        <Button className="w-full h-10 font-bold text-xs uppercase tracking-widest rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-none border-none">
                                             Start Session
-                                            <Sparkles className="ml-2 h-4 w-4" />
+                                            <Sparkles className="ml-2 h-3.5 w-3.5" />
                                         </Button>
                                     </CardContent>
                                 </Card>

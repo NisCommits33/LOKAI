@@ -74,10 +74,10 @@
     --accent-foreground: #1e3a8a;
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
-    --border: #e5e7eb;
-    --input: #e5e7eb;
-    --ring: rgba(30, 58, 138, 0.2);
-    --radius: 0.5rem;
+    --border: #f1f5f9;
+    --input: #f1f5f9;
+    --ring: rgba(30, 58, 138, 0.1);
+    --radius: 0.75rem;
 
     /* Define the color palette from the prompt */
     --primary-light: #3b82f6;

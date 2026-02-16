@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase/client"
 import { organizationSchema, type OrganizationFormValues } from "@/lib/validations/organization"
 import { BackButton } from "@/components/ui/back-button"
 import { motion } from "framer-motion"
+import { Building2, ShieldCheck, Mail, Lock, ArrowRight, Info } from "lucide-react"
 
 export default function OrganizationRegisterPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,7 +33,6 @@ export default function OrganizationRegisterPage() {
         setIsSubmitting(true)
 
         try {
-            // 1. Create the user with email/password
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: data.email,
                 password: data.password,
@@ -46,7 +46,6 @@ export default function OrganizationRegisterPage() {
 
             if (authError) throw authError
 
-            // 2. Submit the organization application
             const { error: appError } = await supabase.from("organization_applications").insert({
                 name: data.orgName,
                 code: data.orgCode,
@@ -71,84 +70,89 @@ export default function OrganizationRegisterPage() {
     }
 
     return (
-        <div className="py-12 bg-gray-50/50 flex-1 min-h-screen">
+        <div className="py-12 bg-white flex-1 min-h-screen">
             <Container>
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
                     className="mx-auto max-w-2xl"
                 >
-                    <div className="mb-8">
+                    <div className="mb-10">
                         <BackButton />
                     </div>
 
-                    <Card className="shadow-2xl border-none overflow-hidden bg-white/80 backdrop-blur-sm">
-                        <div className="h-2 bg-gradient-to-r from-primary/80 via-primary to-primary/80" />
-                        <CardHeader className="text-center pt-10 px-8">
-                            <CardTitle className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
-                                Register Your Organization
-                            </CardTitle>
-                            <CardDescription className="text-lg pt-4 leading-relaxed font-medium">
-                                Join LokAI to empower your workplace with AI-driven learning and document intelligence.
-                            </CardDescription>
+                    <Card className="shadow-none border border-slate-100 overflow-hidden bg-white">
+                        <CardHeader className="pt-12 px-10">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                                    <Building2 className="h-5 w-5" />
+                                </div>
+                                <div className="bg-slate-50 text-slate-400 border-none font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">Institutional Registration</div>
+                            </div>
+                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-tight">Apply for Institutional Access</h1>
+                            <p className="text-slate-500 pt-3 text-base font-medium leading-relaxed">
+                                Join LokAI to enable specialized document intelligence and study resources for your workplace.
+                            </p>
                         </CardHeader>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <CardContent className="space-y-6">
+                            <CardContent className="space-y-8 px-10 pb-8 pt-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="orgName">Organization Name</Label>
-                                        <Input id="orgName" {...register("orgName")} placeholder="e.g. Ministry of Finance" className={errors.orgName ? "border-destructive" : ""} />
-                                        {errors.orgName && <p className="text-xs text-destructive font-medium">{errors.orgName.message}</p>}
+                                        <Label htmlFor="orgName" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Organization Name</Label>
+                                        <Input id="orgName" {...register("orgName")} placeholder="e.g. Ministry of Finance" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.orgName ? "border-red-200" : ""}`} />
+                                        {errors.orgName && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.orgName.message}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="orgCode">Organization Code</Label>
-                                        <Input id="orgCode" {...register("orgCode")} placeholder="e.g. MOF-NP" className={errors.orgCode ? "border-destructive" : ""} />
-                                        {errors.orgCode && <p className="text-xs text-destructive font-medium">{errors.orgCode.message}</p>}
+                                        <Label htmlFor="orgCode" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Identification Code</Label>
+                                        <Input id="orgCode" {...register("orgCode")} placeholder="e.g. MOF-NP" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.orgCode ? "border-red-200" : ""}`} />
+                                        {errors.orgCode && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.orgCode.message}</p>}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="orgDesc">Description (Optional)</Label>
-                                    <Textarea id="orgDesc" {...register("orgDesc")} placeholder="Briefly describe your organization's purpose" rows={3} />
+                                    <Label htmlFor="orgDesc" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Mission Brief (Optional)</Label>
+                                    <Textarea id="orgDesc" {...register("orgDesc")} placeholder="Describe the purpose of your organization" rows={3} className="rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none resize-none" />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="address">Full Address</Label>
-                                    <Input id="address" {...register("address")} placeholder="e.g. Singha Durbar, Kathmandu" className={errors.address ? "border-destructive" : ""} />
-                                    {errors.address && <p className="text-xs text-destructive font-medium">{errors.address.message}</p>}
+                                    <Label htmlFor="address" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Official Address</Label>
+                                    <Input id="address" {...register("address")} placeholder="e.g. Singha Durbar, Kathmandu" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.address ? "border-red-200" : ""}`} />
+                                    {errors.address && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.address.message}</p>}
                                 </div>
 
                                 <div className="relative py-4">
                                     <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t" />
+                                        <span className="w-full border-t border-slate-50" />
                                     </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white px-2 text-muted-foreground font-bold tracking-wider">Admin Credentials</span>
+                                    <div className="relative flex justify-center text-[9px] uppercase font-bold tracking-[0.2em] text-slate-300">
+                                        <span className="bg-white px-4">Administrative Account</span>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">Admin Email</Label>
-                                        <Input id="email" type="email" {...register("email")} placeholder="admin@org.gov.np" className={errors.email ? "border-destructive" : ""} />
-                                        {errors.email && <p className="text-xs text-destructive font-medium">{errors.email.message}</p>}
+                                        <Label htmlFor="email" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Admin Email</Label>
+                                        <Input id="email" type="email" {...register("email")} placeholder="admin@gov.np" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.email ? "border-red-200" : ""}`} />
+                                        {errors.email && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.email.message}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="password">Admin Password</Label>
-                                        <Input id="password" type="password" {...register("password")} className={errors.password ? "border-destructive" : ""} />
-                                        {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
+                                        <Label htmlFor="password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Security Passphrase</Label>
+                                        <Input id="password" type="password" {...register("password")} className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.password ? "border-red-200" : ""}`} />
+                                        {errors.password && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.password.message}</p>}
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex flex-col gap-4">
-                                <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={isSubmitting}>
-                                    {isSubmitting ? "Submitting Application..." : "Complete Registration"}
+                            <CardFooter className="flex flex-col gap-6 px-10 pb-12 pt-4">
+                                <Button type="submit" className="w-full h-12 text-sm font-bold rounded-xl bg-slate-900 text-white shadow-none hover:bg-slate-800 transition-all" disabled={isSubmitting}>
+                                    {isSubmitting ? "Submitting Application..." : "Complete Application"}
+                                    <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
-                                <p className="text-xs text-center text-gray-400 leading-relaxed px-6">
-                                    By registering, you confirm you are an authorized representative of the organization.
-                                    Applications are manually reviewed by our superadmin team.
-                                </p>
+                                <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50/50 border border-transparent justify-center">
+                                    <Info className="h-3 w-3 text-slate-400" />
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center">
+                                        Application confirms you are an authorized representative.
+                                    </p>
+                                </div>
                             </CardFooter>
                         </form>
                     </Card>
@@ -157,4 +161,3 @@ export default function OrganizationRegisterPage() {
         </div>
     )
 }
-
