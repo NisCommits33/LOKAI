@@ -12,6 +12,7 @@ interface AuthContextType {
     loading: boolean
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
+    setMockRole: (role: string) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -125,6 +126,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/')
     }
 
+    const setMockRole = (role: string) => {
+        setProfile((prev: any) => ({
+            ...prev,
+            role,
+            verification_status: role === ROLES.PUBLIC ? VERIFICATION_STATUS.PUBLIC : VERIFICATION_STATUS.VERIFIED
+        }))
+    }
+
     // Loader logic: only block if not on home page and still loading user
     if (loading && pathname !== '/') {
         return (
@@ -141,7 +150,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 profile,
                 loading,
                 signInWithGoogle,
-                signOut
+                signOut,
+                setMockRole
             }}
         >
             {children}

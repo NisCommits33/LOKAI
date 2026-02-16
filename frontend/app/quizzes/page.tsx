@@ -3,13 +3,6 @@
 import { Container } from "@/components/layout/Container"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-
-"use client"
-
-import { Container } from "@/components/layout/Container"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { BackButton } from "@/components/ui/back-button"
 import { motion } from "framer-motion"
 import { BookOpen, Sparkles, ArrowRight, BrainCircuit } from "lucide-react"
