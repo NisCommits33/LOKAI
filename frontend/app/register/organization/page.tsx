@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "react-hot-toast"
 import { supabase } from "@/lib/supabase/client"
 import { organizationSchema, type OrganizationFormValues } from "@/lib/validations/organization"
+import { BackButton } from "@/components/ui/back-button"
+import { motion } from "framer-motion"
 
 export default function OrganizationRegisterPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -69,14 +71,26 @@ export default function OrganizationRegisterPage() {
     }
 
     return (
-        <div className="py-12 bg-gray-50 flex-1">
+        <div className="py-12 bg-gray-50/50 flex-1 min-h-screen">
             <Container>
-                <div className="mx-auto max-w-2xl">
-                    <Card className="shadow-lg border-none">
-                        <CardHeader className="text-center">
-                            <CardTitle className="text-3xl font-black text-primary">Register Your Organization</CardTitle>
-                            <CardDescription className="text-base pt-2">
-                                Apply for a LokAI organization account to manage your resources.
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mx-auto max-w-2xl"
+                >
+                    <div className="mb-8">
+                        <BackButton />
+                    </div>
+
+                    <Card className="shadow-2xl border-none overflow-hidden bg-white/80 backdrop-blur-sm">
+                        <div className="h-2 bg-gradient-to-r from-primary/80 via-primary to-primary/80" />
+                        <CardHeader className="text-center pt-10 px-8">
+                            <CardTitle className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                                Register Your Organization
+                            </CardTitle>
+                            <CardDescription className="text-lg pt-4 leading-relaxed font-medium">
+                                Join LokAI to empower your workplace with AI-driven learning and document intelligence.
                             </CardDescription>
                         </CardHeader>
                         <form onSubmit={handleSubmit(onSubmit)}>
@@ -138,7 +152,7 @@ export default function OrganizationRegisterPage() {
                             </CardFooter>
                         </form>
                     </Card>
-                </div>
+                </motion.div>
             </Container>
         </div>
     )

@@ -9,6 +9,7 @@ import { VERIFICATION_STATUS } from "@/lib/constants"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { User, Shield, Building, Mail, ArrowRight } from "lucide-react"
+import { BackButton } from "@/components/ui/back-button"
 
 export default function ProfilePage() {
     const { user, profile, loading } = useAuth()
@@ -26,9 +27,12 @@ export default function ProfilePage() {
         <div className="py-12 bg-gray-50 flex-1">
             <Container>
                 <div className="max-w-4xl mx-auto space-y-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Account Settings</h1>
-                        <p className="text-gray-500">Manage your profile and organizational verification.</p>
+                    <div className="space-y-4">
+                        <BackButton />
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Account Settings</h1>
+                            <p className="text-gray-500">Manage your profile and organizational verification.</p>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -57,7 +61,7 @@ export default function ProfilePage() {
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600 capitalize">{profile?.role || 'Guest'}</span>
                                             {isVerified && (
-                                                <Badge variant="success" className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0 text-[10px]">VERIFIED</Badge>
+                                                <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0 text-[10px]">VERIFIED</Badge>
                                             )}
                                         </div>
                                     </div>

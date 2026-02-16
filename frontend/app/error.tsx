@@ -4,6 +4,9 @@ import { useEffect } from "react"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { BackButton } from "@/components/ui/back-button"
+import { motion } from "framer-motion"
+import { AlertCircle, RotateCcw, Home } from "lucide-react"
 
 export default function Error({
     error,
@@ -13,57 +16,57 @@ export default function Error({
     reset: () => void
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service
         console.error("Runtime Error:", error)
     }, [error])
 
     return (
-        <div className="flex-1 flex items-center py-20 bg-gray-50">
+        <div className="flex-1 flex items-center py-20 bg-gray-50/50 min-h-screen">
             <Container>
-                <div className="mx-auto max-w-lg text-center">
-                    <Card className="border-destructive/20 shadow-xl">
-                        <CardHeader>
-                            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={1.5}
-                                    stroke="currentColor"
-                                    className="w-10 h-10"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                                    />
-                                </svg>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mx-auto max-w-lg"
+                >
+                    <Card className="border-none shadow-2xl overflow-hidden bg-white/80 backdrop-blur-md">
+                        <div className="h-2 bg-destructive/80" />
+                        <CardHeader className="text-center pt-10">
+                            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                                <AlertCircle className="w-10 h-10" />
                             </div>
-                            <CardTitle className="text-2xl font-bold">Something went wrong!</CardTitle>
-                            <CardDescription>
-                                An unexpected error occurred while processing your request.
+                            <CardTitle className="text-3xl font-black text-gray-900">Oops! Something Broke</CardTitle>
+                            <CardDescription className="text-lg pt-2 font-medium">
+                                We encountered an unexpected error while processing your request.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="rounded-md bg-gray-100 p-4 text-left">
-                                <p className="text-xs font-mono text-gray-500 break-all">
-                                    Error Code: {error.digest || "INTERNAL_RUNTIME_ERROR"}
+                        <CardContent className="px-8 pb-8">
+                            <div className="rounded-xl bg-gray-900 p-6 text-left shadow-inner">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="h-2 w-2 rounded-full bg-red-500" />
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Error Log</span>
+                                </div>
+                                <p className="text-xs font-mono text-destructive/90 break-all leading-relaxed">
+                                    {error.digest || "INTERNAL_RUNTIME_ERROR"}
                                 </p>
-                                <p className="mt-2 text-sm text-gray-700">
-                                    {error.message || "Please try again later or contact support if the issue persists."}
+                                <p className="mt-3 text-sm text-gray-300 font-medium leading-relaxed italic">
+                                    &quot;{error.message || "Please try again later or contact support if the issue persists."}&quot;
                                 </p>
                             </div>
                         </CardContent>
-                        <CardFooter className="flex justify-center gap-4">
-                            <Button variant="outline" onClick={() => window.location.href = "/"}>
-                                Back to Home
-                            </Button>
-                            <Button onClick={() => reset()}>
-                                Try Again
-                            </Button>
+                        <CardFooter className="flex flex-col sm:flex-row justify-center gap-4 bg-gray-50/50 px-8 py-6">
+                            <BackButton className="w-full sm:w-auto" />
+                            <div className="flex gap-3 w-full sm:w-auto">
+                                <Button variant="outline" onClick={() => window.location.href = "/"} className="flex-1 sm:flex-none font-bold">
+                                    <Home className="mr-2 h-4 w-4" />
+                                    Home
+                                </Button>
+                                <Button onClick={() => reset()} className="flex-1 sm:flex-none font-bold shadow-lg shadow-primary/20">
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Try Again
+                                </Button>
+                            </div>
                         </CardFooter>
                     </Card>
-                </div>
+                </motion.div>
             </Container>
         </div>
     )
