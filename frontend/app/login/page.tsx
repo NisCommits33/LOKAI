@@ -57,19 +57,19 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-4rem)] items-center py-12 bg-white">
+        <div className="flex min-h-[calc(100vh-4rem)] items-center py-8 bg-white">
             <Container>
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mx-auto max-w-lg"
                 >
-                    <div className="mb-10">
+                    <div className="mb-6">
                         <BackButton />
                     </div>
 
                     <Card className="shadow-none border border-slate-100 overflow-hidden bg-white">
-                        <CardHeader className="text-center pt-12 px-10">
+                        <CardHeader className="text-center pt-8 px-10">
                             <CardTitle className="text-3xl font-bold text-slate-900 tracking-tight">LokAI</CardTitle>
                             <CardDescription className="text-base pt-3 font-medium text-slate-500">
                                 Sign in to your preparation portal.
@@ -77,7 +77,7 @@ export default function LoginPage() {
                         </CardHeader>
                         <CardContent className="px-10 pb-12">
                             <Tabs defaultValue="individual" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 mb-10 h-11 bg-slate-50 p-1 rounded-xl">
+                                <TabsList className="grid w-full grid-cols-2 mb-6 h-11 bg-slate-50 p-1 rounded-xl">
                                     <TabsTrigger value="individual" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
                                         Personal
                                     </TabsTrigger>

@@ -28,9 +28,9 @@ export default function ProfilePage() {
     const isPending = profile?.verification_status === VERIFICATION_STATUS.PENDING
 
     return (
-        <div className="py-12 bg-white flex-1 min-h-screen">
+        <div className="py-8 bg-white flex-1 min-h-screen">
             <Container>
-                <div className="max-w-5xl mx-auto space-y-12">
+                <div className="max-w-5xl mx-auto space-y-8">
                     <motion.div
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -43,7 +43,7 @@ export default function ProfilePage() {
                         </div>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* Profile Info Card - Minimalist */}
                         <motion.div
                             initial={{ opacity: 0, x: -10 }}
@@ -52,7 +52,7 @@ export default function ProfilePage() {
                         >
                             <Card className="border border-slate-100 shadow-none bg-white overflow-hidden sticky top-28">
                                 <div className="h-20 bg-slate-900" />
-                                <CardHeader className="text-center -mt-10 pb-6">
+                                <CardHeader className="text-center -mt-10 pb-4">
                                     <div className="relative inline-block mx-auto">
                                         <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
                                             <AvatarImage src={user?.user_metadata?.avatar_url} />

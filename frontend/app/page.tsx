@@ -64,7 +64,7 @@ export default function Home() {
   return (
     <div className="relative bg-white text-slate-900">
       {/* Hero Section */}
-      <div className="pt-24 pb-20 sm:pt-32 sm:pb-32 border-b border-slate-50">
+      <div className="pt-16 pb-12 sm:pt-20 sm:pb-20 border-b border-slate-50">
         <Container>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -81,7 +81,7 @@ export default function Home() {
               Exam Preparation Platform.
             </h1>
             <p className="mt-8 text-lg text-slate-500 font-medium leading-relaxed max-w-2xl">
-              A minimalist environment for civil service aspirants. Harness AI for document intelligence,
+              A  environment for civil service aspirants. Harness AI for document intelligence,
               manage official materials securely, and master GK with ease.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -102,14 +102,14 @@ export default function Home() {
       </div>
 
       {/* Feature Highlights */}
-      <div className="py-24 border-b border-slate-50">
+      <div className="py-16 border-b border-slate-50">
         <Container>
           <motion.div
             variants={containers}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-12"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {[
               {
@@ -146,9 +146,9 @@ export default function Home() {
       </div>
 
       {/* Project Summary (College Feel, Minimalist) */}
-      <div className="py-24 bg-slate-50/30">
+      <div className="py-16 bg-slate-50/30">
         <Container>
-          <div className="grid lg:grid-cols-12 gap-16 items-start">
+          <div className="grid lg:grid-cols-12 gap-10 items-start">
             <div className="lg:col-span-7">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 mb-6">Innovative Approach to Lok Sewa.</h2>
               <p className="text-base text-slate-500 font-medium leading-relaxed mb-10 max-w-xl">
@@ -202,7 +202,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="py-16 border-t border-slate-50">
+      <footer className="py-10 border-t border-slate-50">
         <Container>
           <div className="flex flex-col items-center gap-6">
             <span className="text-sm font-bold tracking-tight text-slate-400">LokAI Project Team &copy; 2081</span>

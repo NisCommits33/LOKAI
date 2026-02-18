@@ -53,7 +53,7 @@ export default function PricingPage() {
     }
 
     return (
-        <div className="py-20 bg-white flex-1 min-h-screen">
+        <div className="py-12 bg-white flex-1 min-h-screen">
             <Container>
                 <motion.div
                     initial={{ opacity: 0, y: -5 }}
@@ -66,7 +66,7 @@ export default function PricingPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-24 max-w-2xl mx-auto"
+                    className="text-center mb-12 max-w-2xl mx-auto"
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-6 transition-all">
                         <Globe2 className="h-3 w-3" />
@@ -126,7 +126,7 @@ export default function PricingPage() {
                 <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
-                    className="mt-24 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-10 opacity-30 group"
+                    className="mt-12 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-10 opacity-30 group"
                 >
                     <div className="flex items-center gap-2 grayscale group-hover:grayscale-0 transition-all">
                         <ShieldCheck className="h-4 w-4" />

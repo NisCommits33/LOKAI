@@ -10,12 +10,12 @@ import Link from "next/link"
 
 export default function QuizzesPage() {
     return (
-        <div className="py-12 bg-white flex-1 min-h-screen text-slate-900">
+        <div className="py-8 bg-white flex-1 min-h-screen text-slate-900">
             <Container>
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="max-w-5xl mx-auto space-y-16"
+                    className="max-w-5xl mx-auto space-y-10"
                 >
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                         <div className="space-y-4">

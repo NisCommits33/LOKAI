@@ -48,13 +48,13 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="py-12 bg-white flex-1 min-h-screen">
+        <div className="py-8 bg-white flex-1 min-h-screen">
             <Container>
                 {/* Header Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16"
+                    className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10"
                 >
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ export default function DashboardPage() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
                 >
                     {[
                         { label: "Quizzes", value: "12", icon: <Trophy className="h-4 w-4" />, sub: "Completed this week" },
@@ -111,14 +111,14 @@ export default function DashboardPage() {
                     ))}
                 </motion.div>
 
-                <div className="space-y-16">
+                <div className="space-y-10">
                     <div>
                         <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Preparation Hub</h2>
                         <motion.div
                             variants={containerVariants}
                             initial="hidden"
                             animate="show"
-                            className="grid grid-cols-1 gap-8 md:grid-cols-3"
+                            className="grid grid-cols-1 gap-6 md:grid-cols-3"
                         >
                             {/* GK Hub */}
                             <motion.div variants={itemVariants}>
