@@ -1,6 +1,14 @@
+"use client"
+
 import { Container } from "./Container"
+import { usePathname } from "next/navigation"
 
 export function Footer() {
+    const pathname = usePathname()
+
+    if (pathname?.startsWith("/organization")) {
+        return null
+    }
     return (
         <footer className="border-t bg-gray-50 py-12">
             <Container>

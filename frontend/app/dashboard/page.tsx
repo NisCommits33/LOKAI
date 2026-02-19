@@ -4,8 +4,10 @@ import { Container } from "@/components/layout/Container"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth/AuthProvider"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useEffect } from "react"
 import {
     BookOpen,
     ShieldCheck,
@@ -20,8 +22,19 @@ import {
 
 export default function DashboardPage() {
     const { user, profile, loading } = useAuth()
+    const router = useRouter()
 
-    if (loading) return (
+    useEffect(() => {
+        if (!loading && profile?.role === 'org_admin') {
+            if (profile?.verification_status === 'pending') {
+                router.push('/organization/pending')
+            } else if (profile?.verification_status === 'verified') {
+                router.push('/organization/dashboard')
+            }
+        }
+    }, [loading, profile, router])
+
+    if (loading || (profile?.role === 'org_admin')) return (
         <div className="flex-1 flex items-center justify-center bg-white">
             <div className="flex flex-col items-center gap-4">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
@@ -31,7 +44,7 @@ export default function DashboardPage() {
     )
 
     const isVerified = profile?.verification_status === 'verified'
-    const isOrgAdmin = profile?.role === 'org_admin'
+    const isOrgAdmin = profile?.role === 'org_admin' && isVerified
     const isSuperAdmin = profile?.role === 'super_admin'
 
     const containerVariants = {
@@ -202,36 +215,6 @@ export default function DashboardPage() {
                         </motion.div>
                     </div>
 
-                    {/* Admin Board (Professional, Neutral) */}
-                    {(isOrgAdmin || isSuperAdmin) && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="bg-slate-900 rounded-[2rem] p-8 sm:p-12 text-white relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-                                <Settings className="h-48 w-48" />
-                            </div>
-                            <div className="relative z-10 max-w-xl">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/5 text-[9px] font-bold uppercase tracking-[0.2em] mb-6">
-                                    <ShieldCheck className="h-3 w-3" />
-                                    Administrative Console
-                                </div>
-                                <h2 className="text-3xl font-bold mb-4">Organizational Management.</h2>
-                                <p className="text-slate-400 font-medium mb-10 leading-relaxed text-base">
-                                    You have administrative access. Oversee employee verifications,
-                                    manage official study kits, and monitor institutional progress.
-                                </p>
-                                <Link href="/admin">
-                                    <Button className="h-11 px-8 text-sm font-bold rounded-xl bg-white text-slate-900 hover:bg-slate-100 transition-all">
-                                        Open Board
-                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </Link>
-                            </div>
-                        </motion.div>
-                    )}
                 </div>
             </Container>
         </div>

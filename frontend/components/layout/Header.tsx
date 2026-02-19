@@ -17,8 +17,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LayoutDashboard, LogOut, User, CreditCard, Sparkles } from "lucide-react"
 import { toast } from "react-hot-toast"
 
+import { usePathname } from "next/navigation"
+
 export function Header() {
     const { user, profile, signOut } = useAuth()
+    const pathname = usePathname()
+
+    // Hide header in organization portal routes to avoid duplicates
+    if (pathname.startsWith("/organization")) {
+        return null
+    }
 
     const handleFeatureClick = (e: React.MouseEvent, feature: string) => {
         if (feature === "Library" || feature === "Subscription") {
@@ -48,8 +56,16 @@ export function Header() {
                         <nav className="hidden lg:flex items-center gap-1">
                             {user ? (
                                 <>
-                                    <Link href="/dashboard" className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-slate-50 rounded-lg transition-all">Dashboard</Link>
+                                    <Link
+                                        href={profile?.role === ROLES.ORG_ADMIN ? "/organization/dashboard" : "/dashboard"}
+                                        className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-primary hover:bg-slate-50 rounded-lg transition-all"
+                                    >
+                                        Dashboard
+                                    </Link>
                                     <Link href="/quizzes" className="px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-primary hover:bg-slate-50 rounded-lg transition-all">Practice</Link>
+                                    {profile?.role === ROLES.SUPER_ADMIN && (
+                                        <Link href="/admin" className="px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-primary hover:bg-slate-50 rounded-lg transition-all">System Admin</Link>
+                                    )}
                                     {profile?.role !== ROLES.PUBLIC && (
                                         <Link
                                             href="/library"
@@ -91,7 +107,7 @@ export function Header() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56 mt-2 p-1.5 rounded-xl border-slate-100 shadow-xl" align="end" forceMount>
                                     <DropdownMenuItem className="cursor-pointer py-2 px-3 rounded-lg font-medium text-sm focus:bg-slate-50" asChild>
-                                        <Link href="/dashboard" className="flex items-center">
+                                        <Link href={profile?.role === ROLES.ORG_ADMIN ? "/organization/dashboard" : "/dashboard"} className="flex items-center">
                                             <LayoutDashboard className="mr-2.5 h-4 w-4 text-slate-400" />
                                             Dashboard
                                         </Link>

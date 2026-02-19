@@ -136,7 +136,7 @@ export default function OrganizationRegisterPage() {
                                         {errors.email && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.email.message}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Security Passphrase</Label>
+                                        <Label htmlFor="password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Security password</Label>
                                         <Input id="password" type="password" {...register("password")} className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.password ? "border-red-200" : ""}`} />
                                         {errors.password && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.password.message}</p>}
                                     </div>

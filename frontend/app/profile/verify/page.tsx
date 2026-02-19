@@ -20,7 +20,7 @@ import { motion } from "framer-motion"
 import { BadgeCheck, Clock, ShieldCheck, Building2, UserCheck, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function ProfileVerifyPage() {
-    const { user, profile } = useAuth()
+    const { user, profile, refreshProfile } = useAuth()
     const [organizations, setOrganizations] = useState<any[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const router = useRouter()
@@ -44,6 +44,7 @@ export default function ProfileVerifyPage() {
 
     const onSubmit = async (data: EmployeeVerificationValues) => {
         setIsSubmitting(true)
+        const loadingToast = toast.loading("Sending request...")
         try {
             const { error } = await supabase
                 .from("users")
@@ -56,10 +57,11 @@ export default function ProfileVerifyPage() {
                 .eq("id", user?.id)
 
             if (error) throw error
-            toast.success("Verification request sent!")
-            router.refresh()
+
+            await refreshProfile()
+            toast.success("Verification request sent!", { id: loadingToast })
         } catch (error: any) {
-            toast.error(error.message || "Failed to send request")
+            toast.error(error.message || "Failed to send request", { id: loadingToast })
         } finally {
             setIsSubmitting(false)
         }
@@ -85,7 +87,7 @@ export default function ProfileVerifyPage() {
                                 </div>
                                 <CardTitle className="text-2xl font-bold text-slate-900 tracking-tight">Review Pending</CardTitle>
                                 <CardDescription className="text-sm pt-3 font-medium text-slate-500">
-                                    Your application for **{profile.organizations?.name || 'your office'}** is being processed.
+                                    Your application for **{profile.organizations?.name}** is being processed.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="px-10 pb-6">

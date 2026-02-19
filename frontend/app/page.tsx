@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { motion } from "framer-motion"
 import {
+  Users,
+  Sparkles,
   BookOpen,
   Bot,
   ShieldCheck,
@@ -19,7 +21,7 @@ import {
   Github,
   Award,
   CheckCircle2,
-  Users
+  BrainCircuit
 } from "lucide-react"
 
 export default function Home() {
@@ -101,47 +103,62 @@ export default function Home() {
         </Container>
       </div>
 
-      {/* Feature Highlights */}
-      <div className="py-16 border-b border-slate-50">
+      {/* GK Quiz CTA Section */}
+      <div className="py-20 bg-slate-900 overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-primary blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-primary blur-[120px]" />
+        </div>
         <Container>
-          <motion.div
-            variants={containers}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            {[
-              {
-                title: "GK Practice",
-                description: "Curated question bank covering constitutional history and geography.",
-                icon: <BookOpen className="h-5 w-5" />,
-                border: "border-slate-100"
-              },
-              {
-                title: "AI Doc Lab",
-                description: "Let machine intelligence summarize and quiz you on uploaded materials.",
-                icon: <Bot className="h-5 w-5" />,
-                border: "border-slate-100"
-              },
-              {
-                title: "Org Access",
-                description: "Official ministerial circulars and internal resources for verified staff.",
-                icon: <ShieldCheck className="h-5 w-5" />,
-                border: "border-slate-100"
-              }
-            ].map((feature, idx) => (
-              <motion.div key={idx} variants={item} className="space-y-4">
-                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 border border-slate-100">
-                  {feature.icon}
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div className="max-w-xl space-y-6 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-primary">
+                <BrainCircuit className="h-3 w-3" />
+                Now in Public Beta
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
+                Ready to Master the <br />
+                <span className="text-primary italic">General Knowledge</span> Section?
+              </h2>
+              <p className="text-slate-400 text-lg font-medium leading-relaxed">
+                Dive into our curated question bank covering Nepal's Constitution, History, Geography, and current affairs. Practice with a live timer and track your progress.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+                <Link href="/quizzes" className="w-full sm:w-auto">
+                  <Button size="lg" className="h-14 w-full sm:w-auto px-10 text-base font-bold rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-95">
+                    Start Free Practice
+                    <Sparkles className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/login" className="w-full sm:w-auto">
+                  <Button variant="ghost" className="h-14 w-full sm:w-auto px-8 text-base font-bold rounded-2xl text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    Sign in to track progress
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative w-full max-w-sm">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary/0 rounded-[32px] blur opacity-25" />
+              <div className="relative bg-black/40 border border-white/5 backdrop-blur-sm rounded-[32px] p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Question Preview</span>
+                  <div className="h-2 w-2 rounded-full bg-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">{feature.title}</h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                  {feature.description}
+                <p className="text-white font-bold text-lg leading-snug">
+                  "In which year was the Treaty of Sugauli signed between Nepal and the British East India Company?"
                 </p>
-              </motion.div>
-            ))}
-          </motion.div>
+                <div className="space-y-3">
+                  {["1814", "1815", "1816", "1817"].map((yr, i) => (
+                    <div key={i} className={`p-4 rounded-xl border border-white/5 bg-white/5 flex items-center justify-between ${yr === '1816' ? 'ring-1 ring-primary/50 bg-primary/5' : ''}`}>
+                      <span className="text-xs font-bold text-slate-400">{yr}</span>
+                      {yr === '1816' && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </Container>
       </div>
 
@@ -218,4 +235,3 @@ export default function Home() {
   )
 }
 
-import { Sparkles } from "lucide-react"

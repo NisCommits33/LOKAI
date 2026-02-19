@@ -125,7 +125,7 @@ export default function ProfilePage() {
                                                 <Badge variant="secondary" className="bg-slate-50 text-slate-400 font-bold border-none text-[9px] uppercase px-3">Not Linked</Badge>
                                             )}
                                         </div>
-                                        <CardDescription className="text-sm font-medium pt-2">Verify organizational identity to unlock ministerial resources.</CardDescription>
+                                        <CardDescription className="text-sm font-medium pt-2">Verify organizational identity to unlock  resources.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="px-8 pb-10 pt-0">
                                         {isVerified ? (

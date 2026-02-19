@@ -40,10 +40,23 @@ export default function LoginPage() {
         const password = formData.get("password") as string
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password })
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
             if (error) throw error
+
+            // Fetch profile to determine role
+            const { data: profileData } = await supabase
+                .from("users")
+                .select("role")
+                .eq("id", data.user.id)
+                .single()
+
             toast.success("Signed in successfully")
-            router.push("/dashboard")
+
+            if (profileData?.role === "org_admin") {
+                router.push("/organization/dashboard")
+            } else {
+                router.push("/dashboard")
+            }
         } catch (error: any) {
             toast.error(error.message || "Login failed")
         } finally {
@@ -53,7 +66,13 @@ export default function LoginPage() {
 
     const handleMockLogin = (role: string) => {
         setMockRole(role)
-        router.push("/dashboard")
+        if (role === "super_admin") {
+            router.push("/admin")
+        } else if (role === "org_admin") {
+            router.push("/organization/dashboard")
+        } else {
+            router.push("/dashboard")
+        }
     }
 
     return (
@@ -112,12 +131,15 @@ export default function LoginPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <Button variant="secondary" className="h-10 rounded-xl font-bold text-xs bg-slate-50 hover:bg-slate-100 border-none shadow-none" onClick={() => handleMockLogin("public")}>
-                                                Public Access
+                                                Public
                                             </Button>
                                             <Button variant="secondary" className="h-10 rounded-xl font-bold text-xs bg-slate-50 hover:bg-slate-100 border-none shadow-none" onClick={() => handleMockLogin("employee")}>
-                                                Verify Member
+                                                Member
+                                            </Button>
+                                            <Button variant="secondary" className="h-10 rounded-xl font-bold text-[10px] bg-slate-900 text-white hover:bg-black border-none shadow-none" onClick={() => handleMockLogin("super_admin")}>
+                                                Super Admin
                                             </Button>
                                         </div>
                                     </div>
@@ -132,8 +154,8 @@ export default function LoginPage() {
                                             </div>
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center justify-between pl-1">
-                                                    <Label htmlFor="password" className="text-xs font-bold text-slate-500 uppercase tracking-widest">Passphrase</Label>
-                                                    <Link href="#" className="text-[10px] text-slate-400 font-bold hover:text-primary transition-colors">Reset</Link>
+                                                    <Label htmlFor="password" title="Organization Admin Password" className="text-xs font-bold text-slate-500 uppercase tracking-widest cursor-help">Password</Label>
+                                                    <Link href="/forgot-password" title="Forgot password? Reset here" className="text-[10px] text-slate-400 font-bold hover:text-primary transition-colors">Reset</Link>
                                                 </div>
                                                 <Input id="password" name="password" type="password" className="h-11 rounded-xl border-slate-100 bg-slate-50/30 focus:bg-white transition-all shadow-none" required />
                                             </div>

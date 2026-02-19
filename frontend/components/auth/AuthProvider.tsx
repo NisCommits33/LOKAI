@@ -12,6 +12,7 @@ interface AuthContextType {
     loading: boolean
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
+    refreshProfile: () => Promise<void>
     setMockRole: (role: string) => void
 }
 
@@ -86,13 +87,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 .single()
 
             if (error && error.code === 'PGRST116') {
+                const metadataRole = user.user_metadata?.role
+                const isOrgAdmin = metadataRole === ROLES.ORG_ADMIN || metadataRole === 'org_admin'
+
                 const newProfile = {
                     id: user.id,
                     email: user.email!,
                     full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || "User",
                     avatar_url: user.user_metadata?.avatar_url || null,
-                    role: ROLES.PUBLIC,
-                    verification_status: VERIFICATION_STATUS.PUBLIC
+                    role: isOrgAdmin ? ROLES.ORG_ADMIN : ROLES.PUBLIC,
+                    verification_status: isOrgAdmin ? VERIFICATION_STATUS.PENDING : VERIFICATION_STATUS.PUBLIC
                 }
 
                 const { data: created } = await supabase
@@ -109,6 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error("Profile sync failed:", err)
         } finally {
             setIsSynchronizing(false)
+        }
+    }
+
+    const refreshProfile = async () => {
+        if (user) {
+            await synchronizeProfile(user)
         }
     }
 
@@ -151,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 loading,
                 signInWithGoogle,
                 signOut,
+                refreshProfile,
                 setMockRole
             }}
         >
