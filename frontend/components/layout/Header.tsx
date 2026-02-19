@@ -113,7 +113,7 @@ export function Header() {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="cursor-pointer py-2 px-3 rounded-lg font-medium text-sm focus:bg-slate-50" asChild>
-                                        <Link href="/profile" className="flex items-center">
+                                        <Link href={profile?.role === ROLES.ORG_ADMIN ? "/organization/profile" : "/profile"} className="flex items-center">
                                             <User className="mr-2.5 h-4 w-4 text-slate-400" />
                                             Settings
                                         </Link>

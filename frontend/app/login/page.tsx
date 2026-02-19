@@ -46,14 +46,18 @@ export default function LoginPage() {
             // Fetch profile to determine role
             const { data: profileData } = await supabase
                 .from("users")
-                .select("role")
+                .select("role, verification_status")
                 .eq("id", data.user.id)
                 .single()
 
             toast.success("Signed in successfully")
 
             if (profileData?.role === "org_admin") {
-                router.push("/organization/dashboard")
+                if (profileData?.verification_status === "verified") {
+                    router.push("/organization/dashboard")
+                } else {
+                    router.push("/organization/pending")
+                }
             } else {
                 router.push("/dashboard")
             }
@@ -69,7 +73,7 @@ export default function LoginPage() {
         if (role === "super_admin") {
             router.push("/admin")
         } else if (role === "org_admin") {
-            router.push("/organization/dashboard")
+            router.push("/organization/pending")
         } else {
             router.push("/dashboard")
         }
@@ -132,12 +136,12 @@ export default function LoginPage() {
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            <Button variant="secondary" className="h-10 rounded-xl font-bold text-xs bg-slate-50 hover:bg-slate-100 border-none shadow-none" onClick={() => handleMockLogin("public")}>
+                                            {/* <Button variant="secondary" className="h-10 rounded-xl font-bold text-xs bg-slate-50 hover:bg-slate-100 border-none shadow-none" onClick={() => handleMockLogin("public")}>
                                                 Public
                                             </Button>
                                             <Button variant="secondary" className="h-10 rounded-xl font-bold text-xs bg-slate-50 hover:bg-slate-100 border-none shadow-none" onClick={() => handleMockLogin("employee")}>
                                                 Member
-                                            </Button>
+                                            </Button> */}
                                             <Button variant="secondary" className="h-10 rounded-xl font-bold text-[10px] bg-slate-900 text-white hover:bg-black border-none shadow-none" onClick={() => handleMockLogin("super_admin")}>
                                                 Super Admin
                                             </Button>

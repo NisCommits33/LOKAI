@@ -38,14 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const currentUser = session?.user ?? null
                 setUser(currentUser)
 
-                // 2. Set loading to false as soon as we know the user
-                // This prevents the global "hang"
-                setLoading(false)
-
                 if (currentUser) {
-                    // Start profile sync in background
-                    synchronizeProfile(currentUser)
+                    // Wait for profile sync during initial load
+                    await synchronizeProfile(currentUser)
                 }
+
+                setLoading(false)
             } catch (err) {
                 console.error("Auth initialization failed:", err)
                 setLoading(false)
@@ -61,7 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
                     if (currentUser && !profile) {
-                        synchronizeProfile(currentUser)
+                        setLoading(true)
+                        synchronizeProfile(currentUser).then(() => setLoading(false))
                     }
                 } else if (event === 'SIGNED_OUT') {
                     setProfile(null)

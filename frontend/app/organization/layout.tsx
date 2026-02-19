@@ -49,18 +49,29 @@ export default function OrganizationLayout({ children }: { children: React.React
             }
         }
 
-        if (!loading) {
-            if (!profile || profile.role !== 'org_admin') {
-                router.push('/dashboard')
-            } else if (profile.verification_status !== 'verified') {
-                router.push('/organization/pending')
-            } else {
+        if (!loading && profile) {
+            const role = profile.role
+            const isPendingPage = pathname === '/organization/pending'
+
+            if (role !== 'org_admin') {
+                router.push('/login')
+            } else if (role === 'org_admin') {
                 fetchOrgName()
+                // If they are on the pending page but have the role, 
+                // they might have just been approved, so we can let them out
+                // if they click a link, but we won't force-redirect them away 
+                // UNLESS they are actually verified in the profile.
+                if (isPendingPage && profile.verification_status === 'verified') {
+                    router.push('/organization/dashboard')
+                }
             }
         }
-    }, [profile, loading, router])
+    }, [profile, loading, user, pathname, router])
 
-    if (loading || !profile || profile.role !== 'org_admin' || profile.verification_status !== 'verified') {
+    const role = profile?.role
+    const isAuthorized = role === 'org_admin'
+
+    if (loading || !isAuthorized) {
         return (
             <div className="flex-1 flex items-center justify-center bg-white">
                 <div className="flex flex-col items-center gap-4">
@@ -142,9 +153,9 @@ export default function OrganizationLayout({ children }: { children: React.React
                                 <DropdownMenuContent className="w-56 mt-2 p-1.5 rounded-xl border-slate-100 shadow-xl" align="end">
                                     <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Account Management</DropdownMenuLabel>
                                     <DropdownMenuItem className="cursor-pointer py-2 px-3 rounded-lg font-medium text-sm focus:bg-slate-50" asChild>
-                                        <Link href="/profile" className="flex items-center">
+                                        <Link href="/organization/profile" className="flex items-center">
                                             <User className="mr-2.5 h-4 w-4 text-slate-400" />
-                                            Account Settings
+                                            Administrative Settings
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="cursor-pointer py-2 px-3 rounded-lg font-medium text-sm focus:bg-slate-50">

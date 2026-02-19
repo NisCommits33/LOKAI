@@ -25,16 +25,19 @@ export default function DashboardPage() {
     const router = useRouter()
 
     useEffect(() => {
-        if (!loading && profile?.role === 'org_admin') {
-            if (profile?.verification_status === 'pending') {
+        const role = profile?.role || user?.user_metadata?.role
+        const status = profile?.verification_status
+
+        if (!loading && role === 'org_admin') {
+            if (status === 'pending' || !status) {
                 router.push('/organization/pending')
-            } else if (profile?.verification_status === 'verified') {
+            } else if (status === 'verified') {
                 router.push('/organization/dashboard')
             }
         }
-    }, [loading, profile, router])
+    }, [loading, profile, user, router])
 
-    if (loading || (profile?.role === 'org_admin')) return (
+    if (loading || (profile?.role === 'org_admin' || user?.user_metadata?.role === 'org_admin')) return (
         <div className="flex-1 flex items-center justify-center bg-white">
             <div className="flex flex-col items-center gap-4">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
