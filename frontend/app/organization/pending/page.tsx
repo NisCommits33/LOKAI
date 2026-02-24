@@ -16,6 +16,7 @@ export default function OrganizationPendingPage() {
     const { user, signOut } = useAuth()
     const [status, setStatus] = useState<ApplicationStatus>(null)
     const [orgName, setOrgName] = useState<string>("")
+    const [rejectionReason, setRejectionReason] = useState<string>("")
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -23,7 +24,7 @@ export default function OrganizationPendingPage() {
             if (!user?.email) return
             const { data } = await supabase
                 .from("organization_applications")
-                .select("status, name")
+                .select("status, name, rejection_reason")
                 .eq("applicant_email", user.email)
                 .order("created_at", { ascending: false })
                 .limit(1)
@@ -32,6 +33,7 @@ export default function OrganizationPendingPage() {
             if (data) {
                 setStatus(data.status as ApplicationStatus)
                 setOrgName(data.name)
+                setRejectionReason(data.rejection_reason || "")
             }
             setLoading(false)
         }
@@ -57,7 +59,9 @@ export default function OrganizationPendingPage() {
             icon: <XCircle className="w-8 h-8" />,
             iconBg: "bg-red-50 text-red-500 border-red-100",
             title: "Application Rejected",
-            description: `We're sorry, but the application for ${orgName} was not approved at this time. You may review your details and submit a new application.`,
+            description: rejectionReason
+                ? `Reason: ${rejectionReason}`
+                : `We're sorry, but the application for ${orgName} was not approved at this time.`,
             badge: { color: "bg-red-500", text: "Application Declined" },
         },
     }

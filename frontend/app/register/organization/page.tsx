@@ -14,31 +14,66 @@ import { toast } from "react-hot-toast"
 import { supabase } from "@/lib/supabase/client"
 import { organizationSchema, type OrganizationFormValues } from "@/lib/validations/organization"
 import { BackButton } from "@/components/ui/back-button"
-import { motion } from "framer-motion"
-import { Building2, ShieldCheck, Mail, Lock, ArrowRight, Info } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+    Building2,
+    ShieldCheck,
+    Mail,
+    Lock,
+    ArrowRight,
+    Info,
+    User,
+    FileUp,
+    CheckCircle2,
+    LayoutDashboard,
+    Globe,
+    Phone
+} from "lucide-react"
 
 export default function OrganizationRegisterPage() {
+    const [step, setStep] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [file, setFile] = useState<File | null>(null)
     const router = useRouter()
 
     const {
         register,
         handleSubmit,
+        trigger,
         formState: { errors },
     } = useForm<OrganizationFormValues>({
         resolver: zodResolver(organizationSchema),
+        mode: "onChange"
     })
 
+    const nextStep = async () => {
+        let fields: (keyof OrganizationFormValues)[] = []
+        if (step === 1) fields = ["orgName", "orgCode", "address"]
+        if (step === 2) fields = ["applicantName", "email", "password"]
+
+        const isValid = await trigger(fields)
+        if (isValid) setStep(s => s + 1)
+    }
+
+    const prevStep = () => setStep(s => s - 1)
+
     const onSubmit = async (data: OrganizationFormValues) => {
+        if (!file) {
+            toast.error("Please upload a verification document")
+            return
+        }
+
         setIsSubmitting(true)
+        const loadingToast = toast.loading("Processing your application...")
 
         try {
+            // 1. Create Auth Account
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: data.email,
                 password: data.password,
                 options: {
                     data: {
-                        full_name: `${data.orgName} Admin`,
+                        full_name: data.applicantName,
                         role: "org_admin",
                     },
                 },
@@ -46,117 +81,257 @@ export default function OrganizationRegisterPage() {
 
             if (authError) throw authError
 
+            // 2. Upload Document
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random()}.${fileExt}`
+            const filePath = `verifications/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('org-documents')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            // 3. Create Application Record
             const { error: appError } = await supabase.from("organization_applications").insert({
                 name: data.orgName,
                 code: data.orgCode,
                 description: data.orgDesc,
                 address: data.address,
                 contact_email: data.email,
-                applicant_name: `${data.orgName} Admin`,
+                contact_phone: data.contactPhone,
+                website: data.website,
+                applicant_name: data.applicantName,
                 applicant_email: data.email,
+                documents: JSON.stringify([{
+                    name: file.name,
+                    path: filePath,
+                    type: file.type,
+                    size: file.size
+                }]),
                 status: "pending",
             })
 
             if (appError) throw appError
 
-            toast.success("Application submitted successfully!")
+            toast.success("Application submitted successfully!", { id: loadingToast })
             router.push("/organization/pending")
         } catch (error: any) {
-            toast.error(error.message || "Something went wrong. Please try again.")
+            toast.error(error.message || "Something went wrong", { id: loadingToast })
             console.error(error)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const stepVariants = {
+        hidden: { opacity: 0, x: 20 },
+        visible: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: -20 }
+    }
+
     return (
         <div className="py-12 bg-white flex-1 min-h-screen">
             <Container>
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mx-auto max-w-2xl"
-                >
-                    <div className="mb-10">
+                <div className="mx-auto max-w-2xl">
+                    <div className="mb-10 flex items-center justify-between">
                         <BackButton />
+                        <div className="flex items-center gap-2">
+                            {[1, 2, 3].map((s) => (
+                                <div
+                                    key={s}
+                                    className={`h-1.5 w-8 rounded-full transition-all duration-500 ${step >= s ? "bg-slate-900" : "bg-slate-100"
+                                        }`}
+                                />
+                            ))}
+                        </div>
                     </div>
 
                     <Card className="shadow-none border border-slate-100 overflow-hidden bg-white">
-                        <CardHeader className="pt-12 px-10">
+                        <CardHeader className="pt-12 px-10 bg-slate-50/50 border-b border-slate-100">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                                    <Building2 className="h-5 w-5" />
+                                <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                                    {step === 1 && <Building2 className="h-5 w-5 text-slate-900" />}
+                                    {step === 2 && <User className="h-5 w-5 text-slate-900" />}
+                                    {step === 3 && <FileUp className="h-5 w-5 text-slate-900" />}
                                 </div>
-                                <div className="bg-slate-50 text-slate-400 border-none font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">Institutional Registration</div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Step {step} of 3</div>
                             </div>
-                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-tight">Apply for Institutional Access</h1>
-                            <p className="text-slate-500 pt-3 text-base font-medium leading-relaxed">
-                                Join LokAI to enable specialized document intelligence and study resources for your workplace.
-                            </p>
+                            <CardTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+                                {step === 1 && "Institutional Profile"}
+                                {step === 2 && "Representative Identity"}
+                                {step === 3 && "Document Verification"}
+                            </CardTitle>
+                            <CardDescription className="text-sm font-medium pt-1 text-slate-500">
+                                {step === 1 && "Tell us about your organization or government body."}
+                                {step === 2 && "Create your administrative account credentials."}
+                                {step === 3 && "Upload proof of your institutional authority."}
+                            </CardDescription>
                         </CardHeader>
+
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <CardContent className="space-y-8 px-10 pb-8 pt-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="orgName" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Organization Name</Label>
-                                        <Input id="orgName" {...register("orgName")} placeholder="e.g. Ministry of Finance" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.orgName ? "border-red-200" : ""}`} />
-                                        {errors.orgName && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.orgName.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="orgCode" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Identification Code</Label>
-                                        <Input id="orgCode" {...register("orgCode")} placeholder="e.g. MOF-NP" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.orgCode ? "border-red-200" : ""}`} />
-                                        {errors.orgCode && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.orgCode.message}</p>}
-                                    </div>
-                                </div>
+                            <CardContent className="p-10">
+                                <AnimatePresence mode="wait">
+                                    {step === 1 && (
+                                        <motion.div
+                                            key="step1"
+                                            variants={stepVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                            className="space-y-6"
+                                        >
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Org Name</Label>
+                                                    <Input {...register("orgName")} placeholder="e.g. Ministry of Finance" className="h-11 rounded-xl shadow-none" />
+                                                    {errors.orgName && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.orgName.message}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Org Code</Label>
+                                                    <Input {...register("orgCode")} placeholder="e.g. MOF-NP" className="h-11 rounded-xl shadow-none" />
+                                                    {errors.orgCode && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.orgCode.message}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Address</Label>
+                                                <Input {...register("address")} placeholder="Official location" className="h-11 rounded-xl shadow-none" />
+                                                {errors.address && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.address.message}</p>}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2"><Globe className="h-3 w-3" /> Website</Label>
+                                                    <Input {...register("website")} placeholder="https://..." className="h-11 rounded-xl shadow-none font-medium" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 flex items-center gap-2"><Phone className="h-3 w-3" /> Contact</Label>
+                                                    <Input {...register("contactPhone")} placeholder="+977..." className="h-11 rounded-xl shadow-none font-medium" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Mission (Optional)</Label>
+                                                <Textarea {...register("orgDesc")} placeholder="Primary goals..." className="rounded-xl shadow-none min-h-[100px] resize-none" />
+                                            </div>
+                                        </motion.div>
+                                    )}
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="orgDesc" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Mission Brief (Optional)</Label>
-                                    <Textarea id="orgDesc" {...register("orgDesc")} placeholder="Describe the purpose of your organization" rows={3} className="rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none resize-none" />
-                                </div>
+                                    {step === 2 && (
+                                        <motion.div
+                                            key="step2"
+                                            variants={stepVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                            className="space-y-6"
+                                        >
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Full Name</Label>
+                                                <Input {...register("applicantName")} placeholder="Admin user name" className="h-11 rounded-xl shadow-none" />
+                                                {errors.applicantName && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.applicantName.message}</p>}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Admin Email</Label>
+                                                <Input type="email" {...register("email")} placeholder="verified@gov.np" className="h-11 rounded-xl shadow-none" />
+                                                {errors.email && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.email.message}</p>}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Secure Password</Label>
+                                                <Input type="password" {...register("password")} placeholder="••••••••" className="h-11 rounded-xl shadow-none font-mono" />
+                                                {errors.password && <p className="text-[10px] text-red-500 font-bold pl-1">{errors.password.message}</p>}
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex gap-3">
+                                                <Info className="h-4 w-4 text-amber-500 shrink-0" />
+                                                <p className="text-xs font-medium text-amber-700">These credentials will be used to manage your institutional portal once approved.</p>
+                                            </div>
+                                        </motion.div>
+                                    )}
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="address" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Official Address</Label>
-                                    <Input id="address" {...register("address")} placeholder="e.g. Singha Durbar, Kathmandu" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.address ? "border-red-200" : ""}`} />
-                                    {errors.address && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.address.message}</p>}
-                                </div>
+                                    {step === 3 && (
+                                        <motion.div
+                                            key="step3"
+                                            variants={stepVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            exit="exit"
+                                            className="space-y-8"
+                                        >
+                                            <div className="border-2 border-dashed border-slate-100 rounded-[2rem] p-12 text-center transition-all hover:bg-slate-50 relative group">
+                                                <input
+                                                    type="file"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                />
+                                                <div className="space-y-4">
+                                                    <div className="h-16 w-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center mx-auto text-slate-300 group-hover:text-slate-900 transition-colors shadow-sm">
+                                                        <FileUp className="h-8 w-8" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900">{file ? file.name : "Upload Authorization Proof"}</p>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">PDF, JPG, or PNG (Max 5MB)</p>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                <div className="relative py-4">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-slate-50" />
-                                    </div>
-                                    <div className="relative flex justify-center text-[9px] uppercase font-bold tracking-[0.2em] text-slate-300">
-                                        <span className="bg-white px-4">Administrative Account</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Admin Email</Label>
-                                        <Input id="email" type="email" {...register("email")} placeholder="admin@gov.np" className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.email ? "border-red-200" : ""}`} />
-                                        {errors.email && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.email.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Security password</Label>
-                                        <Input id="password" type="password" {...register("password")} className={`h-11 rounded-xl text-sm border-slate-100 bg-slate-50/50 focus:bg-white transition-all shadow-none ${errors.password ? "border-red-200" : ""}`} />
-                                        {errors.password && <p className="text-[10px] text-red-500 font-bold pl-1 pt-1">{errors.password.message}</p>}
-                                    </div>
-                                </div>
+                                            <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Checklist</h4>
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                                        Institutional ID or Appointment Letter
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                                        Official Government Stamp visibly shown
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </CardContent>
-                            <CardFooter className="flex flex-col gap-6 px-10 pb-12 pt-4">
-                                <Button type="submit" className="w-full h-12 text-sm font-bold rounded-xl bg-slate-900 text-white shadow-none hover:bg-slate-800 transition-all" disabled={isSubmitting}>
-                                    {isSubmitting ? "Submitting Application..." : "Complete Application"}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                                <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50/50 border border-transparent justify-center">
-                                    <Info className="h-3 w-3 text-slate-400" />
-                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center">
-                                        Application confirms you are an authorized representative.
-                                    </p>
-                                </div>
+
+                            <CardFooter className="px-10 pb-12 pt-0 flex gap-4">
+                                {step > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={prevStep}
+                                        disabled={isSubmitting}
+                                        className="h-12 px-6 rounded-xl border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
+                                    >
+                                        Back
+                                    </Button>
+                                )}
+
+                                {step < 3 ? (
+                                    <Button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="flex-1 h-12 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-none"
+                                    >
+                                        Next Step
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmitting || !file}
+                                        className="flex-1 h-12 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-none"
+                                    >
+                                        {isSubmitting ? "Submitting..." : "Submit Application"}
+                                        <CheckCircle2 className="ml-2 h-4 w-4" />
+                                    </Button>
+                                )}
                             </CardFooter>
                         </form>
                     </Card>
-                </motion.div>
+
+                    <div className="mt-8 flex items-center justify-center gap-3">
+                        <ShieldCheck className="h-4 w-4 text-slate-300" />
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Secured by LokAI Governance Protocol</p>
+                    </div>
+                </div>
             </Container>
         </div>
     )

@@ -15,7 +15,8 @@ import {
     Building2,
     ShieldCheck,
     User,
-    CreditCard
+    CreditCard,
+    Briefcase
 } from "lucide-react"
 import {
     DropdownMenu,
@@ -85,6 +86,7 @@ export default function OrganizationLayout({ children }: { children: React.React
     const navigation = [
         { name: "Dashboard", href: "/organization/dashboard", icon: LayoutDashboard },
         { name: "Members", href: "/organization/members", icon: Users },
+        { name: "Structure", href: "/organization/structure", icon: Building2 },
         { name: "Shared Documents", href: "/organization/documents", icon: Files },
         { name: "Settings", href: "/organization/settings", icon: Settings },
     ]

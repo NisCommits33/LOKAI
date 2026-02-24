@@ -50,7 +50,7 @@ export const quizService = {
     },
 
     /**
-     * Fetch a specific quiz by ID
+     * Fetch a specific quiz by ID (GK)
      */
     async getQuizById(id: string) {
         const { data, error } = await supabase
@@ -61,6 +61,64 @@ export const quizService = {
 
         if (error) throw error
         return data as GKQuiz
+    },
+
+    /**
+     * Fetch an organization document quiz
+     */
+    async getOrganizationQuiz(docId: string) {
+        // 1. Get doc metadata
+        const { data: doc, error: docError } = await supabase
+            .from('organization_documents')
+            .select('id, title, description')
+            .eq('id', docId)
+            .single()
+
+        if (docError) throw docError
+
+        // 2. Get questions
+        const { data: questions, error: qError } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('document_id', docId)
+            .eq('is_active', true)
+
+        if (qError) throw qError
+
+        return {
+            id: doc.id,
+            title: doc.title,
+            description: doc.description,
+            questions: questions.map(q => ({
+                id: q.id,
+                question: q.question_text,
+                options: q.options,
+                correct_index: q.correct_index,
+                explanation: q.explanation
+            })),
+            total_questions: questions.length
+        }
+    },
+
+    /**
+     * Fetch a personal document quiz
+     */
+    async getPersonalQuiz(docId: string) {
+        const { data, error } = await supabase
+            .from('personal_documents')
+            .select('id, title, description, questions')
+            .eq('id', docId)
+            .single()
+
+        if (error) throw error
+
+        return {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            questions: data.questions, // Personal docs store questions directly as JSON
+            total_questions: data.questions?.length || 0
+        }
     },
 
     /**

@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS organization_documents (
     organization_id UUID NOT NULL REFERENCES organizations(id),
     department_id UUID REFERENCES departments(id),
     uploaded_by UUID NOT NULL REFERENCES users(id),
+    job_level_id UUID REFERENCES job_levels(id),
     title VARCHAR(500) NOT NULL,
     description TEXT,
     file_path TEXT NOT NULL,
@@ -214,11 +215,127 @@ CREATE POLICY "Users can view themselves" ON users FOR SELECT USING (id = auth.u
 CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (id = auth.uid());
 CREATE POLICY "Users can insert their own profile" ON users FOR INSERT WITH CHECK (id = auth.uid());
 CREATE POLICY "Users can manage their own personal documents" ON personal_documents FOR ALL USING (user_id = auth.uid());
-CREATE POLICY "Verified employees can view org documents" ON organization_documents FOR SELECT USING (
-    organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid() AND verification_status = 'verified')
+CREATE POLICY "View organization documents" ON organization_documents FOR SELECT USING (
+    exists (
+        select 1 from users
+        where id = auth.uid()
+        and organization_id = organization_documents.organization_id
+        and verification_status = 'verified'
+    )
 );
+
+CREATE POLICY "Manage organization documents" ON organization_documents FOR ALL USING (
+    exists (
+        select 1 from users
+        where id = auth.uid()
+        and role = 'org_admin'
+        and organization_id = organization_documents.organization_id
+    )
+) WITH CHECK (
+    exists (
+        select 1 from users
+        where id = auth.uid()
+        and role = 'org_admin'
+        and organization_id = organization_documents.organization_id
+    )
+);
+
 CREATE POLICY "Users can view their own quiz attempts" ON quiz_attempts FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "Users can create their own quiz attempts" ON quiz_attempts FOR INSERT WITH CHECK (user_id = auth.uid());
 
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_org_docs_org_id ON organization_documents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_org_docs_dept_id ON organization_documents(department_id);
+CREATE INDEX IF NOT EXISTS idx_org_docs_processing_status ON organization_documents(processing_status);
+CREATE INDEX IF NOT EXISTS idx_org_docs_job_level_id ON organization_documents(job_level_id);
+
 
 -- Automatic Profile Creation removed (moved to application layer)
+
+-- ============================================================
+-- Storage Configuration
+-- ============================================================
+
+-- Create buckets
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('org-documents', 'org-documents', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policies for org-documents bucket
+-- Allow public insert (for registration and initial uploads)
+CREATE POLICY "Public can upload org documents"
+    ON storage.objects FOR INSERT
+    WITH CHECK (bucket_id = 'org-documents');
+
+CREATE POLICY "Admins can view org documents"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'org-documents');
+
+-- Create personal-documents bucket
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('personal-documents', 'personal-documents', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policies for personal-documents bucket
+CREATE POLICY "Users can manage their own storage"
+ON storage.objects FOR ALL
+USING (bucket_id = 'personal-documents' AND auth.uid()::text = (storage.foldername(name))[1])
+WITH CHECK (bucket_id = 'personal-documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ============================================================
+-- Sprint 10: Analytics & Performance Tracking
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS user_stats (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id),
+    readiness_score DECIMAL(5,2) DEFAULT 0,
+    quizzes_completed INTEGER DEFAULT 0,
+    total_correct_answers INTEGER DEFAULT 0,
+    total_questions_attempted INTEGER DEFAULT 0,
+    average_score_percentage DECIMAL(5,2) DEFAULT 0,
+    last_activity_at TIMESTAMPTZ DEFAULT NOW(),
+    weak_areas JSONB DEFAULT '[]',
+    recommendations JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_stats_org_id ON user_stats(organization_id);
+
+ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own stats" ON user_stats FOR SELECT USING (auth.uid() = user_id);
+
+CREATE OR REPLACE FUNCTION update_user_stats_on_quiz_attempt()
+RETURNS TRIGGER AS $$
+DECLARE
+    current_user_id UUID;
+    current_org_id UUID;
+    v_total_completed INTEGER;
+    v_total_correct INTEGER;
+    v_total_questions INTEGER;
+    v_avg_score DECIMAL(5,2);
+BEGIN
+    current_user_id := NEW.user_id;
+    SELECT organization_id INTO current_org_id FROM users WHERE id = current_user_id;
+    SELECT COUNT(*), SUM(correct_answers), SUM(total_questions), AVG(score_percentage)
+    INTO v_total_completed, v_total_correct, v_total_questions, v_avg_score
+    FROM quiz_attempts WHERE user_id = current_user_id;
+
+    INSERT INTO user_stats (user_id, organization_id, quizzes_completed, total_correct_answers, total_questions_attempted, average_score_percentage, readiness_score, last_activity_at, updated_at)
+    VALUES (current_user_id, current_org_id, v_total_completed, v_total_correct, v_total_questions, v_avg_score, v_avg_score, NOW(), NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+        quizzes_completed = EXCLUDED.quizzes_completed,
+        total_correct_answers = EXCLUDED.total_correct_answers,
+        total_questions_attempted = EXCLUDED.total_questions_attempted,
+        average_score_percentage = EXCLUDED.average_score_percentage,
+        readiness_score = EXCLUDED.average_score_percentage,
+        last_activity_at = EXCLUDED.last_activity_at,
+        updated_at = EXCLUDED.updated_at;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_update_user_stats ON quiz_attempts;
+CREATE TRIGGER trigger_update_user_stats AFTER INSERT ON quiz_attempts FOR EACH ROW EXECUTE FUNCTION update_user_stats_on_quiz_attempt();

@@ -5,19 +5,19 @@ import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
-import { CheckCircle2, XCircle, Trophy, RotateCcw, LayoutDashboard, Share2, Loader2, Info } from "lucide-react"
+import { CheckCircle2, XCircle, Trophy, RotateCcw, LayoutDashboard, Loader2, Info } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth/AuthProvider"
-import { quizService, GKQuiz, QuizAttempt } from "@/lib/services/quizService"
+import { quizService, QuizAttempt } from "@/lib/services/quizService"
 import { toast } from "react-hot-toast"
 
-export default function QuizResultsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params)
+export default function GenericQuizResultsPage({ params }: { params: Promise<{ type: string, id: string }> }) {
+    const { type, id } = use(params)
     const router = useRouter()
     const { user, profile } = useAuth()
 
     // State
-    const [results, setResults] = useState<{ quiz: GKQuiz, answers: Record<number, number>, timeSpent: number } | null>(null)
+    const [results, setResults] = useState<any>(null)
     const [stats, setStats] = useState<{ score: number, percentage: number, correct: number, wrong: number } | null>(null)
     const [isSaving, setIsSaving] = useState(false)
 
@@ -28,13 +28,13 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
             setResults(parsed)
             calculateStats(parsed)
         } else {
-            router.push(`/quizzes/${id}`)
+            router.push(`/quizzes/${type}/${id}`)
         }
-    }, [id])
+    }, [id, type])
 
-    const calculateStats = (data: { quiz: GKQuiz, answers: Record<number, number> }) => {
+    const calculateStats = (data: any) => {
         let correctCount = 0
-        data.quiz.questions.forEach((q, idx) => {
+        data.quiz.questions.forEach((q: any, idx: number) => {
             if (data.answers[idx] === q.correct_index) {
                 correctCount++
             }
@@ -50,24 +50,20 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
     }
 
     const handleSaveAttempt = async () => {
-        if (!user || !profile || !results || !stats || isSaving) {
-            console.log("Save attempt skipped:", { hasUser: !!user, hasProfile: !!profile, hasResults: !!results, hasStats: !!stats, isSaving })
-            return
-        }
+        if (!user || !profile || !results || !stats || isSaving) return
 
         setIsSaving(true)
-        console.log("Saving quiz attempt for user:", user.id)
         try {
             await quizService.submitAttempt({
                 user_id: user.id,
-                source_type: 'gk',
+                source_type: results.sourceType || (type === 'org' ? 'organization' : type),
                 source_id: id,
                 total_questions: results.quiz.total_questions,
                 correct_answers: stats.correct,
                 score_percentage: stats.percentage,
                 time_spent_seconds: results.timeSpent,
                 questions_attempted: results.quiz.questions,
-                answers: Object.values(results.answers)
+                answers: Object.values(results.answers) as number[]
             })
             toast.success("Attempt saved to your history.")
         } catch (error) {
@@ -96,7 +92,6 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
     return (
         <div className="py-12 bg-slate-50/50 min-h-screen">
             <Container className="max-w-4xl space-y-12">
-                {/* Score Summary */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -130,7 +125,7 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
                         <Button
                             variant="default"
                             className="w-full sm:w-auto h-14 bg-slate-900 hover:bg-black text-white px-10 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-black/10 transition-all active:scale-95"
-                            onClick={() => router.push(`/quizzes/${id}`)}
+                            onClick={() => router.push(`/quizzes/${type}/${id}`)}
                         >
                             Retake Practice
                             <RotateCcw className="ml-2 h-4 w-4" />
@@ -146,7 +141,6 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
                     </div>
                 </motion.div>
 
-                {/* Question Breakdown */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between px-4">
                         <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">Detailed Review</h2>
@@ -154,7 +148,7 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     <div className="space-y-4">
-                        {results.quiz.questions.map((q, idx) => {
+                        {results.quiz.questions.map((q: any, idx: number) => {
                             const userAnswer = results.answers[idx]
                             const isCorrect = userAnswer === q.correct_index
 
@@ -178,7 +172,7 @@ export default function QuizResultsPage({ params }: { params: Promise<{ id: stri
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-12">
-                                                {q.options.map((opt, oIdx) => {
+                                                {q.options.map((opt: string, oIdx: number) => {
                                                     const isSelected = userAnswer === oIdx
                                                     const isRight = q.correct_index === oIdx
 

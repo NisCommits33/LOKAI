@@ -8,13 +8,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { motion, AnimatePresence } from "framer-motion"
 import { Timer, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { quizService, GKQuiz } from "@/lib/services/quizService"
+import { quizService } from "@/lib/services/quizService"
 import { useRouter } from "next/navigation"
 
-export default function QuizPlayerPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params)
+export default function GenericQuizPlayerPage({ params }: { params: Promise<{ type: string, id: string }> }) {
+    const { type, id } = use(params)
     const router = useRouter()
 
     // State
@@ -23,16 +23,20 @@ export default function QuizPlayerPage({ params }: { params: Promise<{ id: strin
     const [timeLeft, setTimeLeft] = useState<number | null>(null)
     const [isFinished, setIsFinished] = useState(false)
 
-    // Data Fetching
+    // Data Fetching based on type
     const { data: quiz, isLoading, error } = useQuery({
-        queryKey: ['quiz', id],
-        queryFn: () => quizService.getQuizById(id)
+        queryKey: ['quiz', type, id],
+        queryFn: () => {
+            if (type === 'gk') return quizService.getQuizById(id)
+            if (type === 'personal') return quizService.getPersonalQuiz(id)
+            if (type === 'org' || type === 'organization') return quizService.getOrganizationQuiz(id)
+            throw new Error("Invalid quiz type")
+        }
     })
 
     // Timer Logic
     useEffect(() => {
         if (quiz && !isFinished && timeLeft === null) {
-            // Allocate 1 minute per question
             setTimeLeft(quiz.total_questions * 60)
         }
     }, [quiz, isFinished, timeLeft])
@@ -58,13 +62,13 @@ export default function QuizPlayerPage({ params }: { params: Promise<{ id: strin
     const handleSubmit = async () => {
         if (isFinished) return
         setIsFinished(true)
-        // Store answers in session storage for the results page
         sessionStorage.setItem(`quiz_results_${id}`, JSON.stringify({
             quiz,
             answers: selectedAnswers,
-            timeSpent: (quiz?.total_questions || 0) * 60 - (timeLeft || 0)
+            timeSpent: (quiz?.total_questions || 0) * 60 - (timeLeft || 0),
+            sourceType: type === 'org' ? 'organization' : type
         }))
-        router.push(`/quizzes/${id}/results`)
+        router.push(`/quizzes/${type}/${id}/results`)
     }
 
     const formatTime = (seconds: number) => {
@@ -98,7 +102,6 @@ export default function QuizPlayerPage({ params }: { params: Promise<{ id: strin
 
     return (
         <div className="min-h-screen bg-slate-50/30 flex flex-col">
-            {/* Player Header */}
             <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <Container className="py-4">
                     <div className="flex items-center justify-between">
@@ -129,16 +132,14 @@ export default function QuizPlayerPage({ params }: { params: Promise<{ id: strin
                         exit={{ opacity: 0, x: -20 }}
                         className="space-y-8"
                     >
-                        {/* Question Text */}
                         <div className="space-y-4">
                             <h3 className="text-2xl font-bold text-slate-900 leading-tight">
                                 {currentQuestion.question}
                             </h3>
                         </div>
 
-                        {/* Options Grid */}
                         <div className="grid grid-cols-1 gap-4">
-                            {currentQuestion.options.map((option, index) => {
+                            {currentQuestion.options.map((option: string, index: number) => {
                                 const isSelected = selectedAnswers[currentQuestionIndex] === index
                                 return (
                                     <button
@@ -169,7 +170,6 @@ export default function QuizPlayerPage({ params }: { params: Promise<{ id: strin
                 </AnimatePresence>
             </Container>
 
-            {/* Navigation Footer */}
             <div className="bg-white border-t border-slate-100 py-6">
                 <Container className="max-w-3xl">
                     <div className="flex items-center justify-between gap-4">

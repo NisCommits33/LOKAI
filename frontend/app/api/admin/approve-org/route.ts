@@ -21,60 +21,34 @@ export async function POST(request: NextRequest) {
     })
 
     try {
-        const { action, application } = await request.json()
+        const { action, application, reason } = await request.json()
 
         if (action === "approve") {
-            // 1. Create the organization
-            const { data: orgData, error: orgError } = await supabaseAdmin
-                .from("organizations")
-                .insert({
-                    name: application.name,
-                    code: application.code,
-                    description: application.description,
-                    address: application.address,
-                    contact_email: application.contact_email,
-                    is_active: true
-                })
-                .select()
-                .single()
-
-            if (orgError) {
-                console.error("[approve-org] Org insert error:", orgError)
-                return NextResponse.json({ error: orgError.message }, { status: 500 })
-            }
-
-            // 2. Update application status to approved
-            const { error: appError } = await supabaseAdmin
+            const { error } = await supabaseAdmin
                 .from("organization_applications")
-                .update({ status: "approved", reviewed_at: new Date().toISOString() })
+                .update({
+                    status: "approved",
+                    reviewed_at: new Date().toISOString(),
+                    reviewed_by: (await supabaseAdmin.auth.getUser()).data.user?.id
+                })
                 .eq("id", application.id)
 
-            if (appError) {
-                console.error("[approve-org] App update error:", appError)
-                return NextResponse.json({ error: appError.message }, { status: 500 })
+            if (error) {
+                console.error("[approve-org] Approval error:", error)
+                return NextResponse.json({ error: error.message }, { status: 500 })
             }
 
-            // 3. Update the applicant user profile
-            const { error: userError } = await supabaseAdmin
-                .from("users")
-                .update({
-                    organization_id: orgData.id,
-                    role: "org_admin",
-                    verification_status: "verified"
-                })
-                .eq("email", application.applicant_email)
-
-            if (userError) {
-                console.error("[approve-org] User link error (non-fatal):", userError.message)
-            }
-
-            return NextResponse.json({ success: true, organization: orgData })
+            return NextResponse.json({ success: true, message: "Organization approved. Trigger will handle record creation." })
         }
 
         if (action === "reject") {
             const { error } = await supabaseAdmin
                 .from("organization_applications")
-                .update({ status: "rejected", reviewed_at: new Date().toISOString() })
+                .update({
+                    status: "rejected",
+                    rejection_reason: reason || "No reason provided",
+                    reviewed_at: new Date().toISOString()
+                })
                 .eq("id", application.id)
 
             if (error) {

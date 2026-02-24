@@ -7,7 +7,8 @@ import { useAuth } from "@/components/auth/AuthProvider"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
 import {
     BookOpen,
     ShieldCheck,
@@ -17,14 +18,30 @@ import {
     ArrowRight,
     Trophy,
     History,
-    Sparkles
+    Sparkles,
+    Zap,
+    Target,
+    BarChart3
 } from "lucide-react"
+import { ReadinessGauge } from "@/components/analytics/ReadinessGauge"
+import { WeakAreasList } from "@/components/analytics/WeakAreasList"
+import { RecommendationsList } from "@/components/analytics/RecommendationsList"
+import { toast } from "react-hot-toast"
 
 export default function DashboardPage() {
     const { user, profile, loading } = useAuth()
     const router = useRouter()
 
+    const [stats, setStats] = useState<any>(null)
+    const [weakAreas, setWeakAreas] = useState<any[]>([])
+    const [recommendations, setRecommendations] = useState<any[]>([])
+    const [statsLoading, setStatsLoading] = useState(true)
+
     useEffect(() => {
+        if (!loading && user) {
+            fetchAnalytics()
+        }
+
         const role = profile?.role || user?.user_metadata?.role
         const status = profile?.verification_status
 
@@ -36,6 +53,32 @@ export default function DashboardPage() {
             }
         }
     }, [loading, profile, user, router])
+
+    const fetchAnalytics = async () => {
+        try {
+            setStatsLoading(true)
+            const token = (await supabase.auth.getSession()).data.session?.access_token
+            if (!token) return
+
+            const headers = { 'Authorization': `Bearer ${token}` }
+
+            // Fetch all analytics in parallel
+            const [statsRes, weakRes, recsRes] = await Promise.all([
+                fetch('/api/user/stats', { headers }),
+                fetch('/api/user/analytics/weak-areas', { headers }),
+                fetch('/api/user/analytics/recommendations', { headers })
+            ])
+
+            if (statsRes.ok) setStats(await statsRes.json())
+            if (weakRes.ok) setWeakAreas(await weakRes.json())
+            if (recsRes.ok) setRecommendations(await recsRes.json())
+
+        } catch (error) {
+            console.error("Failed to fetch analytics:", error)
+        } finally {
+            setStatsLoading(false)
+        }
+    }
 
     if (loading || (profile?.role === 'org_admin' || user?.user_metadata?.role === 'org_admin')) return (
         <div className="flex-1 flex items-center justify-center bg-white">
@@ -127,6 +170,80 @@ export default function DashboardPage() {
                     ))}
                 </motion.div>
 
+                {/* Verified Employee Specific Dashboard Section */}
+                {isVerified && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16"
+                    >
+                        {/* Summary Column */}
+                        <div className="lg:col-span-8 space-y-8">
+                            <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white rounded-[2.5rem] overflow-hidden">
+                                <CardContent className="p-10">
+                                    <div className="flex flex-col md:flex-row items-center gap-12">
+                                        <ReadinessGauge score={stats?.readiness_score || 0} />
+
+                                        <div className="flex-1 space-y-6">
+                                            <div className="space-y-2">
+                                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Examination Readiness</h3>
+                                                <p className="text-slate-500 font-medium text-sm leading-relaxed">
+                                                    Based on {stats?.quizzes_completed || 0} institutional assessments and recent accuracy patterns.
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-slate-50 p-4 rounded-2xl">
+                                                    <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">Total Score</p>
+                                                    <p className="text-xl font-black text-slate-900">{Math.round(stats?.average_score_percentage || 0)}%</p>
+                                                </div>
+                                                <div className="bg-slate-50 p-4 rounded-2xl">
+                                                    <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">Completions</p>
+                                                    <p className="text-xl font-black text-slate-900">{stats?.quizzes_completed || 0}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Study Recommendations</h2>
+                                    <div className="flex items-center gap-2 text-indigo-500">
+                                        <Sparkles className="h-4 w-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">AI suggestions</span>
+                                    </div>
+                                </div>
+                                <RecommendationsList recommendations={recommendations} />
+                            </div>
+                        </div>
+
+                        {/* Side Analysis Column */}
+                        <div className="lg:col-span-4 space-y-8">
+                            <div className="space-y-6">
+                                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <Target className="h-3 w-3" />
+                                    Critical Weak Areas
+                                </h2>
+                                <WeakAreasList areas={weakAreas} />
+                            </div>
+
+                            <Card className="border border-indigo-50 bg-indigo-50/30 shadow-none rounded-[2rem]">
+                                <CardContent className="p-8 space-y-4">
+                                    <div className="h-10 w-10 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-[0_8px_16px_rgba(99,102,241,0.2)]">
+                                        <Zap className="h-5 w-5" />
+                                    </div>
+                                    <h4 className="font-black text-slate-900">Optimization Tip</h4>
+                                    <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                                        Focusing on your {weakAreas.length > 0 ? "identified weak areas" : "targeted documents"} can increase your readiness score by up to 15% this week.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </motion.div>
+                )}
+
                 <div className="space-y-10">
                     <div>
                         <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Preparation Hub</h2>
@@ -208,10 +325,12 @@ export default function DashboardPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="px-8 pb-8 mt-auto pt-4">
-                                        <Button variant="secondary" className="w-full h-10 font-bold rounded-xl bg-slate-50 border-none" disabled={!isVerified && !isOrgAdmin}>
-                                            Open Library
-                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Button>
+                                        <Link href="/organization/library" className={(!isVerified && !isOrgAdmin && !isSuperAdmin) ? "pointer-events-none" : ""}>
+                                            <Button variant="secondary" className="w-full h-10 font-bold rounded-xl bg-slate-50 border-none" disabled={!isVerified && !isOrgAdmin && !isSuperAdmin}>
+                                                Open Library
+                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </Link>
                                     </CardContent>
                                 </Card>
                             </motion.div>

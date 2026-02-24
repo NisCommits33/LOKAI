@@ -55,6 +55,10 @@ export default function MemberManagementPage() {
     const [rejectionReason, setRejectionReason] = useState("")
     const [rejectLoading, setRejectLoading] = useState(false)
 
+    // Removal modal
+    const [removeMember, setRemoveMember] = useState<any>(null)
+    const [removeLoading, setRemoveLoading] = useState(false)
+
     const fetchMembers = async () => {
         if (!profile?.organization_id) return
         setLoading(true)
@@ -89,17 +93,19 @@ export default function MemberManagementPage() {
         setApproveLoading(true)
         const loadingToast = toast.loading("Approving member...")
         try {
-            const { error } = await supabase
-                .from("users")
-                .update({
-                    verification_status: VERIFICATION_STATUS.VERIFIED,
-                    role: "employee",
-                    verified_at: new Date().toISOString(),
-                    verified_by: profile?.id,
-                    rejection_reason: null,
-                })
-                .eq("id", approveMember.id)
-            if (error) throw error
+            const { data: { session } } = await supabase.auth.getSession()
+            const response = await fetch("/api/verification/approve", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ member_id: approveMember.id }),
+            })
+
+            const result = await response.json()
+            if (!response.ok) throw new Error(result.error || "Failed to approve")
+
             toast.success("Member approved!", { id: loadingToast })
             setApproveMember(null)
             fetchMembers()
@@ -119,17 +125,22 @@ export default function MemberManagementPage() {
         setRejectLoading(true)
         const loadingToast = toast.loading("Rejecting request...")
         try {
-            const { error } = await supabase
-                .from("users")
-                .update({
-                    verification_status: VERIFICATION_STATUS.REJECTED,
-                    rejection_reason: rejectionReason.trim(),
-                    organization_id: null,
-                    department_id: null,
-                    job_level_id: null,
-                })
-                .eq("id", rejectMember.id)
-            if (error) throw error
+            const { data: { session } } = await supabase.auth.getSession()
+            const response = await fetch("/api/verification/reject", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({
+                    member_id: rejectMember.id,
+                    reason: rejectionReason.trim(),
+                }),
+            })
+
+            const result = await response.json()
+            if (!response.ok) throw new Error(result.error || "Failed to reject")
+
             toast.success("Request rejected", { id: loadingToast })
             setRejectMember(null)
             setRejectionReason("")
@@ -138,6 +149,37 @@ export default function MemberManagementPage() {
             toast.error(e.message || "Failed to reject", { id: loadingToast })
         } finally {
             setRejectLoading(false)
+        }
+    }
+
+    // ── Remove ────────────────────────────────────────────────────────────────
+    const confirmRemove = async () => {
+        if (!removeMember) return
+        setRemoveLoading(true)
+        const loadingToast = toast.loading("Removing member access...")
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            const response = await fetch("/api/verification/remove", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({
+                    member_id: removeMember.id
+                }),
+            })
+
+            const result = await response.json()
+            if (!response.ok) throw new Error(result.error || "Failed to remove member")
+
+            toast.success("Access revoked successfully", { id: loadingToast })
+            setRemoveMember(null)
+            fetchMembers()
+        } catch (e: any) {
+            toast.error(e.message || "Failed to remove member", { id: loadingToast })
+        } finally {
+            setRemoveLoading(false)
         }
     }
 
@@ -217,8 +259,8 @@ export default function MemberManagementPage() {
                             key={tab}
                             onClick={() => setActiveFilter(tab)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === tab
-                                    ? "bg-slate-900 text-white"
-                                    : "bg-slate-50 text-slate-400 hover:text-slate-900"
+                                ? "bg-slate-900 text-white"
+                                : "bg-slate-50 text-slate-400 hover:text-slate-900"
                                 }`}
                         >
                             {tab === "pending" && <Clock className="h-3 w-3" />}
@@ -339,10 +381,20 @@ export default function MemberManagementPage() {
                                                         <XCircle className="h-4 w-4" />
                                                     </Button>
                                                 </>
+                                            ) : status === VERIFICATION_STATUS.VERIFIED ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setRemoveMember(member)}
+                                                    className="h-9 px-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-none"
+                                                >
+                                                    Revoke Access
+                                                    <XCircle className="ml-2 h-3.5 w-3.5" />
+                                                </Button>
                                             ) : (
                                                 <div className="flex items-center gap-2 py-2 px-3 rounded-xl border border-dashed border-slate-100 text-[9px] font-black text-slate-300 uppercase tracking-widest">
                                                     <Calendar className="h-3 w-3" />
-                                                    {status === VERIFICATION_STATUS.VERIFIED ? "Active" : status === VERIFICATION_STATUS.REJECTED ? "Rejected" : "Public"}
+                                                    {status === VERIFICATION_STATUS.REJECTED ? "Rejected" : "Public"}
                                                 </div>
                                             )}
                                         </div>
@@ -443,6 +495,39 @@ export default function MemberManagementPage() {
                             className="rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-none font-bold"
                         >
                             {rejectLoading ? "Rejecting..." : "Reject Request"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* ── Remove Modal ───────────────────────────────────────────────────────── */}
+            <Dialog open={!!removeMember} onOpenChange={() => setRemoveMember(null)}>
+                <DialogContent className="sm:max-w-md rounded-2xl border-slate-100 shadow-2xl">
+                    <DialogHeader>
+                        <div className="h-12 w-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center mb-4 border border-red-100">
+                            <XCircle className="h-6 w-6" />
+                        </div>
+                        <DialogTitle className="text-xl font-bold text-slate-900">Revoke Access</DialogTitle>
+                        <DialogDescription className="text-slate-500 font-medium">
+                            Are you sure you want to remove this member? They will lose access to all institutional materials.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-100">
+                        <p className="text-sm font-bold text-slate-900">{removeMember?.full_name || "Member"}</p>
+                        <p className="text-xs text-slate-500 font-medium">{removeMember?.email}</p>
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium italic">
+                        * This action will reset their account to a public profile.
+                    </p>
+                    <DialogFooter className="gap-3">
+                        <Button variant="outline" onClick={() => setRemoveMember(null)} className="rounded-xl border-slate-100">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={confirmRemove}
+                            disabled={removeLoading}
+                            className="rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-none font-bold"
+                        >
+                            {removeLoading ? "Removing..." : "Confirm Removal"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
